@@ -1522,7 +1522,7 @@ class AccountMoveLine(models.Model):
             ):
                 line.amount_currency = line.balance
             if (
-                (changed('amount_currency') or changed('currency_rate') or changed('move_type'))
+                (changed('amount_currency') or (changed('currency_rate') and line.display_type != "cogs") or changed('move_type'))
                 and not self.env.is_protected(self._fields['balance'], line)
                 and (not changed('balance') or (line not in before and not line.balance))
             ):
@@ -1567,7 +1567,6 @@ class AccountMoveLine(models.Model):
                         )
 
         lines.move_id._synchronize_business_models(['line_ids'])
-        lines._check_constrains_account_id_journal_id()
         # Remove analytic lines created for draft AMLs, after analytic_distribution has been updated
         lines.filtered(lambda l: l.parent_state == 'draft').analytic_line_ids.with_context(skip_analytic_sync=True).unlink()
         return lines

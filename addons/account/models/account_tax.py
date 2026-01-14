@@ -213,7 +213,7 @@ class AccountTax(models.Model):
                         ('country_id', '=', tax.country_id.id),
                         ('id', '!=', tax.id),
                     ])
-            if duplicates := self.search(expression.OR(domains)):
+            if duplicates := self.sudo().search(expression.OR(domains)):
                 raise ValidationError(
                     _("Tax names must be unique!")
                     + "\n" + "\n".join(_(
@@ -1688,7 +1688,7 @@ class AccountTax(models.Model):
                 total_tax_amount = values[f'tax_amount{delta_currency_indicator}']
                 delta_total_tax_amount = rounded_raw_total_tax_amount - total_tax_amount
 
-                if raw_total_tax_amount:
+                if not delta_currency.is_zero(delta_total_tax_amount):
                     target_factors = [
                         {
                             'factor': tax_data[f'raw_tax_amount{delta_currency_indicator}'],
@@ -1718,7 +1718,7 @@ class AccountTax(models.Model):
                     total_base_amount = values[f'base_amount{delta_currency_indicator}']
                     delta_total_base_amount = rounded_raw_total_base_amount - total_base_amount
 
-                if raw_total_base_amount:
+                if not delta_currency.is_zero(delta_total_base_amount):
                     target_factors = [
                         {
                             'factor': tax_data[f'raw_base_amount{delta_currency_indicator}'],

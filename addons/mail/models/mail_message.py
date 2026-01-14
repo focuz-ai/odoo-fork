@@ -594,7 +594,7 @@ class Message(models.Model):
     def create(self, values_list):
         tracking_values_list = []
         for values in values_list:
-            if not (self.env.user.has_group('base.group_user') or self.env.su):
+            if not (self.env.su or self.env.user.has_group('base.group_user')):
                 values.pop('author_id', None)
                 values.pop('email_from', None)
                 self = self.with_context({k: v for k, v in self.env.context.items() if k not in ['default_author_id', 'default_email_from']})  # noqa: PLW0642
@@ -708,7 +708,7 @@ class Message(models.Model):
         return super().fetch(field_names)
 
     def write(self, vals):
-        if not (self.env.user.has_group('base.group_user') or self.env.su):
+        if not (self.env.su or self.env.user.has_group('base.group_user')):
             vals.pop('author_id', None)
             vals.pop('email_from', None)
         record_changed = 'model' in vals or 'res_id' in vals
@@ -965,11 +965,7 @@ class Message(models.Model):
         if msg_vals:
             scheduled_dt_by_msg_id = {msg.id: msg_vals.get("scheduled_date", False) for msg in self}
         elif self:
-            schedulers = (
-                self.env["mail.message.schedule"]
-                .sudo()
-                .search([("mail_message_id", "in", self.ids)])
-            )
+            schedulers = self.env["mail.message.schedule"].sudo().search([("mail_message_id", "in", self.ids)])
             for scheduler in schedulers:
                 scheduled_dt_by_msg_id[scheduler.mail_message_id.id] = scheduler.scheduled_datetime
         record_by_message = self._record_by_message()
@@ -1157,8 +1153,12 @@ class Message(models.Model):
             # have access to the record related to the notification. In this case, we skip it.
             # YTI FIXME: check allowed_company_ids if necessary
             if record := record_by_message.get(message):
-                if record.has_access('read'):
-                    messages += message
+                try:
+                    if record.has_access('read'):
+                        messages += message
+                except (MissingError):
+                    # record has been removed from db without cascading notif -> avoid crash at least
+                    continue
         messages_per_partner = defaultdict(lambda: self.env['mail.message'])
         for message in messages:
             if not self.env.user._is_public():

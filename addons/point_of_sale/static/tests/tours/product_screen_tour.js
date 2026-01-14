@@ -485,8 +485,24 @@ registry.category("web_tour.tours").add("PosCustomerAllFieldsDisplayed", {
             ProductScreenPartnerList.searchCustomerValueAndClear("United States"),
             ProductScreenPartnerList.searchCustomerValueAndClear("9898989899"),
             ProductScreenPartnerList.searchCustomerValueAndClear("0987654321"),
+            ProductScreenPartnerList.searchCustomerValueAndClear("john@doe.com"),
+            // Test wildcard search ('j%hn d%e' -> john doe)
             ProductScreen.clickPartnerButton(),
-            PartnerList.searchCustomerValue("john@doe.com"),
+            {
+                isActive: ["mobile"],
+                content: `Click search field`,
+                trigger: `.fa-search.undefined`,
+                run: `click`,
+            },
+            {
+                content: `Search customer with "j%hn d%e"`,
+                trigger: `.modal-dialog .input-group input`,
+                run: `edit j%hn d%e`,
+            },
+            {
+                content: `Check "John Doe" is shown`,
+                trigger: `.partner-list .partner-info:nth-child(1):contains("John Doe")`,
+            },
         ].flat(),
 });
 
@@ -496,28 +512,28 @@ registry.category("web_tour.tours").add("PosCategoriesOrder", {
             Chrome.startPoS(),
             Dialog.confirm("Open Register"),
             {
-                trigger: '.category-button:eq(0) > span:contains("AAA")',
+                trigger: '.category-button:eq(0) > div span:contains("AAA")',
             },
             {
-                trigger: '.category-button:eq(1) > span:contains("AAB")',
+                trigger: '.category-button:eq(1) > div span:contains("AAB")',
             },
             {
-                trigger: '.category-button:eq(2) > span:contains("AAC")',
+                trigger: '.category-button:eq(2) > div span:contains("AAC")',
             },
             {
-                trigger: '.category-button:eq(1) > span:contains("AAB")',
+                trigger: '.category-button:eq(1) > div span:contains("AAB")',
                 run: "click",
             },
             ProductScreen.productIsDisplayed("Product in AAB and AAX", 0),
             {
-                trigger: '.category-button:eq(2) > span:contains("AAX")',
+                trigger: '.category-button:eq(2) > div span:contains("AAX")',
             },
             {
-                trigger: '.category-button:eq(2) > span:contains("AAX")',
+                trigger: '.category-button:eq(2) > div span:contains("AAX")',
                 run: "click",
             },
             {
-                trigger: '.category-button:eq(3) > span:contains("AAY")',
+                trigger: '.category-button:eq(3) > div span:contains("AAY")',
             },
         ].flat(),
 });
