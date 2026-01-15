@@ -542,6 +542,10 @@ class AccountEdiXmlUBLBIS3(models.AbstractModel):
     # EXPORT: Templates for invoice header nodes
     # -------------------------------------------------------------------------
 
+    def _can_export_selfbilling(self):
+        # Overridden in `account_peppol_selfbilling`
+        return False
+
     def _add_invoice_header_nodes(self, document_node, vals):
         # Call the parent method from UBL 2.1
         super()._add_invoice_header_nodes(document_node, vals)
@@ -646,6 +650,10 @@ class AccountEdiXmlUBLBIS3(models.AbstractModel):
                         'cbc:ID': {'_text': commercial_partner.peppol_endpoint}
                     }
                 ]
+        elif commercial_partner.country_code == 'BE' and commercial_partner.company_registry:
+            party_node['cac:PartyIdentification'] = {
+                'cbc:ID': {'_text': commercial_partner.company_registry}
+            }
 
         party_node['cac:PartyTaxScheme'] = party_tax_scheme = [
             {
@@ -687,6 +695,10 @@ class AccountEdiXmlUBLBIS3(models.AbstractModel):
             party_node['cac:PartyLegalEntity']['cbc:CompanyID'] = {
                 '_text': ''.join(char for char in commercial_partner.company_registry if char.isdigit
                 ())
+            }
+        elif commercial_partner.country_code == 'BE' and commercial_partner.company_registry:
+            party_node['cac:PartyLegalEntity']['cbc:CompanyID'] = {
+                '_text': commercial_partner.company_registry
             }
         else:
             party_node['cac:PartyLegalEntity']['cbc:CompanyID'] = {
